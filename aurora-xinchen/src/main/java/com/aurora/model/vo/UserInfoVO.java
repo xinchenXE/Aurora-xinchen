@@ -1,0 +1,28 @@
+package com.aurora.model.vo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import jakarta.validation.constraints.NotBlank;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Schema(description = "用户信息对象")
+public class UserInfoVO {
+
+    @NotBlank(message = "昵称不能为空")
+    @Schema(description = "昵称")
+    private String nickname;
+
+    @Schema(description = "介绍")
+    private String intro;
+
+    @Schema(description = "个人网站")
+    private String website;
+
+}

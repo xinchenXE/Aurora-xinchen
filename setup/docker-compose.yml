@@ -1,0 +1,138 @@
+# Aurora 中间件本地/单机编排
+# 用法：
+#   cp .env.example .env   # 修改 .env 中的所有 CHANGEME
+#   docker compose up -d
+#   docker compose ps
+# 首次启动时 MySQL 会自动导入 setup/sql/aurora-init.sql。
+# 端口口径必须与 setup/nacos-template.yml、setup/bootstrap.properties.template 保持一致。
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: aurora-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: aurora
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      # Maxwell 依赖 row 格式 binlog
+      - --binlog-format=ROW
+      - --server-id=1
+    ports:
+      - "3306:3306"
+    volumes:
+      - aurora-mysql-data:/var/lib/mysql
+      - ./sql/aurora-init.sql:/docker-entrypoint-initdb.d/00-aurora-init.sql:ro
+
+  redis:
+    image: redis:7.4
+    container_name: aurora-redis
+    restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - aurora-redis-data:/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: aurora-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - aurora-rabbitmq-data:/var/lib/rabbitmq
+
+  nacos:
+    image: nacos/nacos-server:v3.2.3
+    container_name: aurora-nacos
+    restart: always
+    environment:
+      MODE: standalone
+      # Nacos 3 鉴权
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN}
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_AUTH_IDENTITY_KEY}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_AUTH_IDENTITY_VALUE}
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      # 新生代：3.x standalone 默认 -Xmn256m，配合 512m 堆收紧到 128m，减少 GC 抖动
+      JVM_XMN: 128m
+    # 容器级上限：512m 堆 + 元空间/线程栈/直接内存之外再留余量；超限由 Docker 回收，不拖垮整机
+    mem_limit: 768m
+    ports:
+      # 宿主 8300/9300/8880：避开系统中占用 8848/9848/8080 的服务
+      - "8300:8848"   # HTTP
+      - "9300:9848"   # gRPC（客户端按 server-addr 端口 +1000）
+      - "8880:8080"   # 控制台
+    volumes:
+      - aurora-nacos-logs:/home/nacos/logs
+
+  elasticsearch:
+    image: elasticsearch:7.17.27
+    container_name: aurora-es
+    restart: always
+    environment:
+      discovery.type: single-node
+      # 单机博客的索引量很小，256m 足够；机器内存紧张时可再用 search.mode: mysql 直接不启动本服务
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      xpack.security.enabled: "false"
+    # 容器级上限：ES 进程本身还要占堆外内存（Lucene、线程栈），堆 256m 时给到 640m
+    mem_limit: 640m
+    ports:
+      - "9200:9200"
+      # 9300 已被 Nacos gRPC 占用，宿主机改用 9301；如后端走 HTTP REST（9200）无需关心
+      - "9301:9300"
+    volumes:
+      - aurora-es-data:/usr/share/elasticsearch/data
+
+  maxwell:
+    image: zendesk/maxwell:latest
+    container_name: aurora-maxwell
+    restart: always
+    depends_on:
+      - mysql
+      - rabbitmq
+    command:
+      - bin/maxwell
+      - --user=root
+      - --password=${MYSQL_ROOT_PASSWORD}
+      - --host=mysql
+      - --producer=rabbitmq
+      - --rabbitmq_user=${RABBITMQ_USER}
+      - --rabbitmq_pass=${RABBITMQ_PASSWORD}
+      - --rabbitmq_host=rabbitmq
+      - --rabbitmq_port=5672
+      - --rabbitmq_exchange=maxwell_exchange
+      - --rabbitmq_exchange_type=fanout
+      - --rabbitmq_exchange_durable=true
+      - "--filter=exclude: *.*, include: aurora.t_article.article_title = *, include: aurora.t_article.article_content = *, include: aurora.t_article.is_delete = *, include: aurora.t_article.status = *"
+
+  minio:
+    image: minio/minio:latest
+    container_name: aurora-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - aurora-minio-data:/data
+
+volumes:
+  aurora-mysql-data:
+  aurora-redis-data:
+  aurora-rabbitmq-data:
+  aurora-nacos-logs:
+  aurora-es-data:
+  aurora-minio-data:

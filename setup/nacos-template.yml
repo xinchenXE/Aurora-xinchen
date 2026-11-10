@@ -1,0 +1,188 @@
+# Aurora 配置模板（Nacos 配置中心用）
+# 放置方式：Nacos 控制台 → 配置管理 → 新建配置
+#   dataId:    application-cloud.yml
+#   group:     DEFAULT_GROUP
+#   格式:      YAML
+# 后端 bootstrap.properties 通过以下两行定位该配置：
+#   spring.config.import=optional:nacos:application-cloud.yml?group=DEFAULT_GROUP&refreshEnabled=true
+#   spring.cloud.nacos.config.prefix=application / file-extension=yml
+# 说明：本文件只是**模板**，运行时以 Nacos 服务端内容为准。
+#       下面的口令与密钥均为本地示例值，部署到公网前请全部替换。
+
+server:
+  port: 8080
+
+# JWT 签名密钥（Base64 编码，至少 32 字节随机数）。必须替换，禁止使用示例值。
+auth:
+  secret: CHANGEME-BASE64-32-BYTES-RANDOM
+  issuer: aurora
+
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/aurora?serverTimezone=Asia/Shanghai&allowMultiQueries=true
+    # 修改为你的数据库账号口令
+    username: root
+    password: CHANGEME
+    druid:
+      initialSize: 5
+      minIdle: 5
+      maxActive: 20
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+      filter:
+        commons-log:
+          connection-logger-name: stat,wall,knife4j
+      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      useGlobalDataSourceStat: true
+
+  # Boot 3 配置键：spring.redis.* 已改为 spring.data.redis.*
+  # 应用固定使用 DB 1
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: CHANGEME
+      database: 1
+      lettuce:
+        pool:
+          max-idle: 100
+          max-active: 100
+          max-wait: 10000
+          min-idle: 10
+
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 3000
+
+  elasticsearch:
+    # 使用 MySQL 搜索策略时（search.mode: mysql）可不启动 ES
+    uris: http://127.0.0.1:9200
+
+  mail:
+    # 评论/订阅通知邮件；留空则不发信
+    host: smtp.exmail.qq.com
+    username:
+    password:
+    default-encoding: UTF-8
+    protocol: smtp
+    port: 465
+    properties:
+      mail:
+        smtp:
+          auth: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 465
+          ssl:
+            enable: true
+          starttls:
+            enable: true
+            required: true
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  # HTTP 客户端超时：限制 AI（及其他 RestClient）调用的连接/读取时长，避免供应商不可达时无限挂起
+  http:
+    client:
+      connect-timeout: 5s
+      read-timeout: 60s
+
+  # Spring AI 多模型兼容（OpenAI 协议）：可对接任意提供 OpenAI 兼容接口的厂商/本地服务，
+  # 只需改 base-url / api-key / model 三处，无需改代码；也可在 /ai/chat 请求里用 model 参数单次临时切换模型。
+  # 常见示例（默认请求路径为 /v1/chat/completions，可用 spring.ai.openai.chat.completions-path 覆盖）：
+  #   OpenAI:    base-url: https://api.openai.com          model: gpt-4o-mini
+  #   DeepSeek:  base-url: https://api.deepseek.com        model: deepseek-chat / deepseek-reasoner
+  #   Kimi:      base-url: https://api.moonshot.cn         model: moonshot-v1-8k
+  #   智谱 GLM:  base-url: https://open.bigmodel.cn/api/paas/v4  model: glm-4-flash（需同时设 completions-path: /chat/completions）
+  #   Ollama 本地: base-url: http://127.0.0.1:11434        model: llama3.1（api-key 随意填，如 ollama）
+  ai:
+    openai:
+      base-url: https://api.openai.com
+      # 不用 AI 对话也建议保留占位符；启用时替换为真实 API Key
+      api-key: 'sk-placeholder-configure-your-key'
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.7
+    # AI 调用快速失败重试：Spring AI 默认 10 次重试+指数退避，供应商不可达时单条请求可挂起十余分钟
+    retry:
+      max-attempts: 2
+      backoff:
+        initial-interval: 1000
+        multiplier: 2
+        max-interval: 5000
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+# 搜索策略：elasticsearch（需 ES + Maxwell）或 mysql（单机轻量，无需 ES）
+search:
+  mode: elasticsearch
+
+# 对象存储：minio 或 oss；url 为浏览器可访问的对外地址
+upload:
+  mode: minio
+  oss:
+    url:
+    endpoint:
+    accessKeyId:
+    accessKeySecret:
+    bucketName:
+  minio:
+    url: http://localhost:9000
+    endpoint: http://127.0.0.1:9000
+    accessKey: admin
+    secretKey: CHANGEME
+    bucketName: aurora
+
+knife4j:
+  enable: true
+  # 生产环境建议设为 true 关闭文档
+  production: false
+
+website:
+  url: http://localhost:8080
+
+# QQ 互联登录（可选）
+qq:
+  # QQ 互联 AppID：必须与前台 aurora-blog/src/config/config.ts 的 QQ_APP_ID 一致
+  app-id: 102036183
+  check-token-url: https://graph.qq.com/oauth2.0/me?access_token={access_token}
+  user-info-url: https://graph.qq.com/user/get_user_info?openid={openid}&access_token={access_token}&oauth_consumer_key={oauth_consumer_key}
+
+# Aurora AI 对话（可选，Nacos 热更新；不配置时代码内有默认值）
+aurora:
+  ai:
+    chat:
+      # 默认角色名称（后台「AI人设设置」配置后以后台为准）
+      role-name: 爱莉希雅
+      # 默认开场白（后台「AI人设设置」配置后以后台为准）
+      greeting: 嗨~ 想我了嘛🎶，爱莉希雅一直在这里哦~~~
+      # 基础系统提示词（默认人设）；请求携带 rolePrompt 时，角色扮演要求会自动附加在其后
+      system-prompt: 你是 Aurora 博客的 AI 助手，回答简洁、准确、友好。
+      # 请求级模型覆盖白名单：仅 admin 角色可传 model，且取值须在此列表内；
+      # 空列表 = 禁用模型覆盖。例：allowed-models: [deepseek-chat, deepseek-reasoner]
+      allowed-models: []

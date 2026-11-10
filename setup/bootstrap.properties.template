@@ -1,0 +1,39 @@
+# Aurora 后端 Nacos 引导配置模板
+# 用法：
+#   1. 复制本文件为 aurora-xinchen/src/main/resources/bootstrap.properties
+#   2. 按实际情况修改下面以 CHANGEME 开头的值
+#   3. 启动前注入 Nacos 口令环境变量：NACOS_PASSWORD（见 setup/README.md）
+# 注意：不要把本文件直接命名为 bootstrap.properties 放在仓库根目录，会被 Spring 误读。
+
+spring.application.name=nacos
+spring.profiles.active=cloud
+# SCA 2025.x 需要显式声明 Nacos 配置导入（旧版引导上下文自动加载已废弃）
+# optional: 前缀：配置刷新时 Nacos 资源短暂缺失不再导致进程崩溃
+spring.config.import=optional:nacos:application-cloud.yml?group=DEFAULT_GROUP&refreshEnabled=true
+
+# Nacos 命名空间：填「命名空间 ID」（3.x 新建时会生成 UUID，在控制台「命名空间」页的 ID 列复制），
+# 不是填名称。若用默认 public 命名空间，整行删掉（留空会被当成 public）。
+spring.cloud.nacos.config.namespace=CHANGEME-命名空间ID
+
+# Nacos 服务地址：填 Nacos 所在服务器的内网/公网 IP + 宿主 HTTP 端口。
+# 后端会用到两个端口：HTTP 8300，以及 gRPC 8300+1000=9300，两个都要放通。
+# 本机开发填 127.0.0.1:8300；Nacos 与后端分属两台机器时填 Nacos 那台的 IP（如 10.0.0.5:8300）。
+spring.cloud.nacos.config.server-addr=CHANGEME-nacos-ip:8300
+
+# 服务发现（discovery）：本项目未引入 nacos-discovery 依赖，@EnableDiscoveryClient 无实现类、属空操作，
+# 以下三行可整段删除。如以后确实接入服务发现，再补依赖并填写同样的地址与命名空间。
+#spring.cloud.nacos.discovery.namespace=CHANGEME-命名空间ID
+#spring.cloud.nacos.discovery.server-addr=CHANGEME-nacos-ip:8300
+#
+# 配置文件名拆分：prefix + "-" + file-extension = application-cloud.yml
+spring.cloud.nacos.config.prefix=application
+spring.cloud.nacos.config.file-extension=yml
+
+# Nacos 账号口令：口令不落仓，通过环境变量注入
+spring.cloud.nacos.config.username=${NACOS_USERNAME:nacos}
+spring.cloud.nacos.config.password=${NACOS_PASSWORD:}
+
+spring.cloud.nacos.config.refresh-enabled=true
+
+# 注意：config 项为配置中心项，使用 Nacos 作为配置中心时必填；
+#       discovery 项为服务发现配置项，不使用服务注册时可删除。

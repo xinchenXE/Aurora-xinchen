@@ -1,0 +1,36 @@
+{
+    "models": [
+        {
+            "id": 1,
+            "texturesId": 1,
+            "name": "Potion-Maker/Pio",
+            "dir": "Potion-Maker/Pio",
+            "textures": 87,
+            "defaultTexturesId": 7
+        },
+        {
+            "id": 2,
+            "texturesId": 1,
+            "name": "Potion-Maker/Tia",
+            "dir": "Potion-Maker/Tia",
+            "textures": 63,
+            "defaultTexturesId": 1
+        },
+        {
+            "id": 3,
+            "texturesId": 1,
+            "name": "22-3695903",
+            "dir": "bilibili-live/22",
+            "textures": 156,
+            "defaultTexturesId": 16
+        },
+        {
+            "id": 4,
+            "texturesId": 1,
+            "name": "33-3695903",
+            "dir": "bilibili-live/33",
+            "textures": 156,
+            "defaultTexturesId": 16
+        }
+    ]
+}

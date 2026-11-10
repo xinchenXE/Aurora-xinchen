@@ -1,0 +1,22 @@
+# 前端统一镜像（保持上游 aurora-vue 镜像契约：单 nginx 容器，blog 在 /，admin 在 /admin）
+# 2026-08-15 新建：原 workflow 引用的 aurora-vue/Dockerfile 在本分支历史中从未存在
+
+FROM node:24-alpine AS build-blog
+WORKDIR /app/aurora-blog
+COPY aurora-blog/package.json aurora-blog/package-lock.json ./
+RUN npm ci
+COPY aurora-blog/ ./
+RUN npm run build
+
+FROM node:24-alpine AS build-admin
+WORKDIR /app/aurora-admin
+COPY aurora-admin/package.json aurora-admin/package-lock.json ./
+RUN npm ci
+COPY aurora-admin/ ./
+RUN npm run build
+
+FROM nginx:alpine
+COPY nginx.frontend.conf /etc/nginx/conf.d/default.conf
+COPY --from=build-blog /app/aurora-blog/dist /usr/share/nginx/html
+COPY --from=build-admin /app/aurora-admin/dist /usr/share/nginx/html/admin
+EXPOSE 80

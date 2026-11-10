@@ -1,0 +1,58 @@
+
+.DS_Store
+node_modules
+dist
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 编译生成物
+target
+dist
+*.class
+*.jar
+*.war
+
+# 本地运行时日志
+aurora-xinchen/app-local.out.log
+aurora-xinchen/app-local.err.log
+aurora-blog/frontend-dev.log
+aurora-admin/admin-dev.log
+aurora-blog/notification-dev.log
+backend-*.log
+
+# Windows 保留设备名文件（因 "nul" 导致 git add 失败）
+nul
+
+# 走查临时目录（verify.cjs 是脚本模板，需要保留跟踪）
+aurora-blog/.edge-verify/*
+!aurora-blog/.edge-verify/verify.cjs
+
+# 本地环境变量（setup/.env.example 是模板，.env 含真实口令，绝不能提交）
+setup/.env
+
+# ============================================================
+# 不发布到 GitHub 的内容（仅保留在本地）
+# 说明：本地保留治理目录；若希望 GitHub 上也有留档，改用独立私有仓库。
+# ============================================================
+# 执行治理目录（计划队列、问题台账、代码修改记录等）
+/执行计划/
+# AI 执行规范
+/AGENTS.md

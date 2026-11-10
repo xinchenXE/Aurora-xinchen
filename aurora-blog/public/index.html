@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>你我都是小小的星尘</title>
+    <!---开https--->
+     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
+    <link rel="stylesheet" href="<%= BASE_URL %>vendor/katex/katex.min.css" />
+    <!-- Live2D 样式由组件从 @/assets/waifu.css 引入；光标与星空特效已本地化到 vendor/ -->
+    <link rel="stylesheet" href="<%= BASE_URL %>vendor/cursor/cursor.css" />
+    <!-- <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script> -->
+    <script
+      src="https://connect.qq.com/qc_jssdk.js"
+      data-appid="102036183"
+      data-redirecturi="https://nahida.pink/oauth/login/qq"></script>
+    <script src="<%= BASE_URL %>vendor/katex/katex.min.js"></script>
+    <script src="<%= BASE_URL %>vendor/star-effect.js"></script>
+    <script src="<%= BASE_URL %>vendor/jquery/jquery.min.js"></script>
+  
+
+    
+  </head>
+  <body>
+    <span class="js-cursor-container"></span>
+    <div id="app">
+      
+    </div>
+    <!-- <script src="https://xinchen.xyz/cdn/js/boom1.js" ></script> -->
+
+
+  </body>
+  <script>
+    console.log("本工程由布耶尔开发并更新维护");
+  </script>
+</html>

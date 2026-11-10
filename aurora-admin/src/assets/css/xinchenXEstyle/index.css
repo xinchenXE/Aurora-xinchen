@@ -1,0 +1,8 @@
+.login-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    background-image: linear-gradient(to bottom right, #d819bf, #2683cf, #63e4b9);
+}

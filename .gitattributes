@@ -1,0 +1,9 @@
+# 语言统计意图（2026-09-30 拍板固化，队列项 013 / ISS-013）
+# 这 4 行让 GitHub 把前端文件计入 Java 语言统计，避免仓库语言占比被前端主导，
+# 与项目"以 Java 后端为主体"的自我定位一致。**属有意配置，不要当作误配删除。**
+# 拍板依据与完整背景见 执行计划/归档计划/2026-09-30-013-gitattributes-intent-note.md。
+# 未加 eol=lf / text=auto：换行口径沿用 core.autocrlf，改 eol 需全仓检查，收益不抵风险。
+*.js linguist-language=Java
+*.ts linguist-language=Java
+*.css linguist-language=Java
+*.scss linguist-language=Java

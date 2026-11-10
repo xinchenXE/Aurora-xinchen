@@ -1,0 +1,10 @@
+# Dockerfile.frontend 的构建上下文裁剪（context 为仓库根目录）
+.git
+.idea
+.vscode
+**/node_modules
+**/target
+**/dist
+*.log
+setup/.env
+setup/sql
